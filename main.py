@@ -56,3 +56,12 @@ for tr in soup.find_all('tr'):
 pdtInfos['image_url'] = soup.img['src'].replace('../..', 'http://books.toscrape.com')
 
 print(pdtInfos)
+
+#csv
+csvColumns = ['product_page_url', 'upc', 'title', 'price_including_tax', 'price_excluding_tax', 'number_available', 'product_description', 'category', 'review_rating', 'image_url']
+csvFile = 'scrapped_books.csv'
+with open('data/' + csvFile, 'w', encoding='utf-8') as csvFile:
+    writer = csv.DictWriter(csvFile, fieldnames=csvColumns)
+    writer.writeheader()
+    writer.writerow(pdtInfos)
+
