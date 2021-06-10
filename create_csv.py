@@ -6,7 +6,7 @@ def write_csv(list_books_dicts):
     categorie = list_books_dicts[0]['category']
     csvFile = categorie + '.csv'
 
-    with open('data/' + categorie + '/' + csvFile, 'w', encoding='utf8') as csvFile:
+    with open('data/' + categorie + '/' + csvFile, 'w') as csvFile:
         writer = csv.DictWriter(csvFile, delimiter=";", fieldnames=csvColumns)
         writer.writeheader()
         for data in list_books_dicts:
