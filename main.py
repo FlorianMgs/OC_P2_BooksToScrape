@@ -1,67 +1,48 @@
-import csv
 import requests
 from bs4 import BeautifulSoup
+from scraper import scrap_book_info
+from create_csv import write_csv
 
-# declaration du dictionnaire qui contiendra les infos du livre
-pdtInfos = {
-    'product_page_url': '',
-    'upc': '',
-    'title': '',
-    'price_including_tax': '',
-    'price_excluding_tax': '',
-    'number_available': '',
-    'product_description': '',
-    'category': '',
-    'review_rating': '',
-    'image_url': '',
-}
+# recuperation des urls de toutes les categories
+htmlResponse = requests.get('http://books.toscrape.com/index.html')
+soup = BeautifulSoup(htmlResponse.text, 'lxml')
 
-# Recupération du html brut de la page, passage dans bs4
-url = 'http://books.toscrape.com/catalogue/a-light-in-the-attic_1000/index.html'
-response = requests.get(url)
-soup = BeautifulSoup(response.text, 'lxml')
+categories = {}
+for a in soup.find('div', {'class': 'side_categories'}).ul.find_all('a'):
+    if 'books_1' not in a.get('href'):
+        categories[a.text.replace('\n', '').replace('  ', '')] = 'http://books.toscrape.com/' + a.get('href')
 
-# url
-pdtInfos['product_page_url'] = url
+# scrap des livres de chaque categories
+for categorie, catUrl in categories.items():
+    htmlResponse = requests.get(catUrl)
+    soup = BeautifulSoup(htmlResponse.text, 'lxml')
 
-# Title
-pdtInfos['title'] = soup.h1.text
+    # determination du nb de pages de la catégorie
+    if soup.find('ul', {'class': 'pager'}):
+        nbPages = int(''.join(x for x in soup.find('li', {'class': 'current'}).text if x.isdigit() and x != '1'))
+    else:
+        nbPages = 1
 
-# description, review_rating
-for p in soup.find_all('p'):
-    try:
-        rating = p['class']
-        if 'star-rating' in rating:
-            pdtInfos['review_rating'] = rating[1]
-    except KeyError:
-        pdtInfos['product_description'] = p.text
+    # récupération des urls de chaque livre présent dans la catégorie
+    i = 0
+    booksUrl = []
+    while i < nbPages:
+        for book in soup.find_all('article'):
+            bookUrl = book.h3.a.get('href').replace('../../../', 'http://books.toscrape.com/catalogue/')
+            booksUrl.append(bookUrl)
+        i += 1
+        if nbPages > 1:
+            nextPage = requests.get(catUrl.replace('index.html', 'page-' + str(i+1) + '.html'))
+            soup = BeautifulSoup(nextPage.text, 'lxml')
 
-# category
-for a in soup.ul.find_all('a'):
-    if 'Home' not in a.text and 'Books' not in a.text:
-        pdtInfos['category'] = a.text
+    # Scrap des infos de chaque livre
+    allBooksFromCurrentCategory = []
+    for url in booksUrl:
+        allBooksFromCurrentCategory.append(scrap_book_info(url))
 
-# UPC, prices, availability
-for tr in soup.find_all('tr'):
-    if 'UPC' in tr.text:
-        pdtInfos['upc'] = tr.td.text
-    elif 'excl' in tr.text:
-        pdtInfos['price_excluding_tax'] = tr.td.text.replace('Â', '')
-    elif 'incl' in tr.text:
-        pdtInfos['price_including_tax'] = tr.td.text.replace('Â', '')
-    elif 'Availability' in tr.text:
-        pdtInfos['number_available'] = ''.join(x for x in tr.td.text if x.isdigit())
+    # Ecriture des fichiers CSV
+    write_csv(allBooksFromCurrentCategory)
 
-# image url
-pdtInfos['image_url'] = soup.img['src'].replace('../..', 'http://books.toscrape.com')
+    print("Successfully scrapped " + str(len(allBooksFromCurrentCategory)) + " books from " + categorie + " category")
 
-print(pdtInfos)
-
-#csv
-csvColumns = ['product_page_url', 'upc', 'title', 'price_including_tax', 'price_excluding_tax', 'number_available', 'product_description', 'category', 'review_rating', 'image_url']
-csvFile = 'scrapped_books.csv'
-with open('data/' + csvFile, 'w', encoding='utf-8') as csvFile:
-    writer = csv.DictWriter(csvFile, fieldnames=csvColumns)
-    writer.writeheader()
-    writer.writerow(pdtInfos)
 
