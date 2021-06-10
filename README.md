@@ -30,7 +30,11 @@ Les données sont générées à la racine du projet suivant cette arborescence:
 ```
 # Installation:
 Commencez tout d'abord par installer Python.
-Lancez ensuite la console, placez vous dans le dossier de votre choix puis créez un environnement virtuel:
+Lancez ensuite la console, placez vous dans le dossier de votre choix puis clonez ce repository:
+```
+git clone https://github.com/FlorianMgs/OC_P2_BooksToScrape.git
+```
+Placez vous dans le dossier OC_P2_BooksToScrape, puis créez un nouvel environnement virtuel:
 ```
 python -m venv env
 ```
@@ -42,10 +46,6 @@ env\scripts\activate.bat
 Linux:
 ```
 source env/bin/activate
-```
-Clonez ensuite ce repository:
-```
-git clone https://github.com/FlorianMgs/OC_P2_BooksToScrape.git
 ```
 Il ne reste plus qu'à installer les packages requis:
 ```
