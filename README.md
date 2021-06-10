@@ -13,7 +13,9 @@ Ces informations sont les suivantes:
  - Rating
  - URL de l'image
 
-Ces données sont ensuite classées par catégories et inscrites dans un fichier CSV correspondant. En plus de cela, les images des livres sont téléchargées.
+
+En plus de cela, les images des livres sont téléchargées.
+Ces données sont ensuite classées par catégories et inscrites dans un fichier CSV correspondant.
 Les données sont générées à la racine du projet suivant cette arborescence:
 ```
 |-- data/
@@ -35,7 +37,7 @@ python -m venv env
 Ensuite, activez-le.
 Windows:
 ```
-env/scripts/activate.bat
+env\scripts\activate.bat
 ```
 Linux:
 ```
