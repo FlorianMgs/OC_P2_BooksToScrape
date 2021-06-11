@@ -44,5 +44,3 @@ for categorie, catUrl in categories.items():
     write_csv(allBooksFromCurrentCategory)
 
     print("Successfully scrapped " + str(len(allBooksFromCurrentCategory)) + " books from " + categorie + " category")
-
-
