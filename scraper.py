@@ -2,67 +2,98 @@ import requests
 import os
 from bs4 import BeautifulSoup
 
-def scrap_book_info(url):
-    
-    # declaration du dictionnaire qui contiendra les infos du livre
-    bookInfos = {
-        'product_page_url': '',
-        'upc': '',
-        'title': '',
-        'price_including_tax': '',
-        'price_excluding_tax': '',
-        'number_available': '',
-        'product_description': '',
-        'category': '',
-        'review_rating': '',
-        'image_url': '',
-    }
-    
-    # Recupération du html brut de la page, reencodage en utf8 pour garder les charactères spéciaux puis passage dans bs4
-    htmlResponse = requests.get(url).content.decode('utf8').encode('utf8', 'ignore')
-    soup = BeautifulSoup(htmlResponse, 'lxml')
-    
-    # url
-    bookInfos['product_page_url'] = url
-    
-    # Title
-    bookInfos['title'] = soup.h1.text
-    
-    # description, review_rating
-    for p in soup.find_all('p'):
-        try:
-            rating = p['class']
-            if 'star-rating' in rating:
-                bookInfos['review_rating'] = rating[1]
-        except KeyError:
-            bookInfos['product_description'] = p.text
+class Book:
 
-    # category
-    for a in soup.ul.find_all('a'):
-        if 'Home' not in a.text and 'Books' not in a.text:
-            bookInfos['category'] = a.text
-    
-    # UPC, prices, availability
-    for tr in soup.find_all('tr'):
-        if 'UPC' in tr.text:
-            bookInfos['upc'] = tr.td.text
-        elif 'excl' in tr.text:
-            bookInfos['price_excluding_tax'] = tr.td.text.replace('Â', '')
-        elif 'incl' in tr.text:
-            bookInfos['price_including_tax'] = tr.td.text.replace('Â', '')
-        elif 'Availability' in tr.text:
-            bookInfos['number_available'] = ''.join(x for x in tr.td.text if x.isdigit())
-    
-    # image url
-    bookInfos['image_url'] = soup.img['src'].replace('../..', 'http://books.toscrape.com')
+    def get_soup(self, url):
+        htmlResponse = requests.get(url).content.decode('utf8').encode('utf8', 'ignore')
+        soup = BeautifulSoup(htmlResponse, 'lxml')
+        return soup
 
-    # download image
-    img = requests.get(bookInfos['image_url'])
+    def book_url(self, url):
+        return {'product_page_url': url}
 
-    # write image
-    path = 'data/' + bookInfos['category'] + '/imgs'
-    if not os.path.exists(path):
-        os.makedirs(path)
-    open(path + '/' + ''.join([x for x in bookInfos['title'] if x.isalnum()]) + '.jpg', 'wb').write(img.content)
+    def book_title(self, url):
+        soup = self.get_soup(url)
+        return {'title': soup.h1.text}
 
-    return bookInfos
+    def book_desc_reviews(self, url):
+        soup = self.get_soup(url)
+
+        desc = ""
+        review = ""
+
+        for p in soup.find_all('p'):
+            try:
+                rating = p['class']
+                if 'star-rating' in rating:
+                    review = rating[1]
+            except KeyError:
+                desc = p.text
+        return {
+            'review_rating': review,
+            'product_description': desc
+        }
+
+    def book_category(self, url):
+        soup = self.get_soup(url)
+        for a in soup.ul.find_all('a'):
+            if 'Home' not in a.text and 'Books' not in a.text:
+                return {'category': a.text}
+
+    def book_upc_prices_stocks(self, url):
+        soup = self.get_soup(url)
+
+        upc = ""
+        priceExclTax = ""
+        priceInclTax = ""
+        stock = ""
+
+        for tr in soup.find_all('tr'):
+            if 'UPC' in tr.text:
+                upc = tr.td.text
+            elif 'excl' in tr.text:
+                priceExclTax = tr.td.text.replace('Â', '')
+            elif 'incl' in tr.text:
+                priceInclTax = tr.td.text.replace('Â', '')
+            elif 'Availability' in tr.text:
+                stock = ''.join(x for x in tr.td.text if x.isdigit())
+        return {
+            'upc': upc,
+            'price_excluding_tax': priceExclTax,
+            'price_including_tax': priceInclTax,
+            'number_available': stock
+        }
+
+    def book_img(self, url):
+        soup = self.get_soup(url)
+
+        imageUrl = soup.img['src'].replace('../..', 'http://books.toscrape.com')
+        imageBinary = requests.get(imageUrl)
+        category = self.book_category(url)
+        title = self.book_title(url)
+        path = 'data/' + category['category'] + '/imgs'
+        imgTitle = ''.join([x for x in title['title'] if x.isalnum()]) + '.jpg'
+
+        if not os.path.exists(path):
+            os.makedirs(path)
+        # write image
+        open(path + '/' + imgTitle, 'wb').write(imageBinary.content)
+
+        return {
+            'image_url': imageUrl,
+            'image_path': path + '/' + imgTitle
+        }
+
+    def generate_data(self, url):
+        bookUrl = self.book_url(url)
+        bookTitle = self.book_title(url)
+        bookDescReviews = self.book_desc_reviews(url)
+        bookCategory = self.book_category(url)
+        bookUpcPricesStocks = self.book_upc_prices_stocks(url)
+        bookImg = self.book_img(url)
+
+        bookInfos = {}
+        for d in [bookUrl, bookTitle, bookDescReviews, bookCategory, bookUpcPricesStocks, bookImg]:
+            bookInfos.update(d)
+
+        return bookInfos

@@ -1,6 +1,6 @@
 import requests
 from bs4 import BeautifulSoup
-from scraper import scrap_book_info
+from scraper import Book
 from create_csv import write_csv
 
 # recuperation des urls de toutes les categories
@@ -38,7 +38,8 @@ for categorie, catUrl in categories.items():
     # Scrap des infos de chaque livre
     allBooksFromCurrentCategory = []
     for url in booksUrl:
-        allBooksFromCurrentCategory.append(scrap_book_info(url))
+        currentBook = Book().generate_data(url)
+        allBooksFromCurrentCategory.append(currentBook)
 
     # Ecriture des fichiers CSV
     write_csv(allBooksFromCurrentCategory)
