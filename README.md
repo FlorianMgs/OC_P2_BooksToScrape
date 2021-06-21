@@ -12,6 +12,7 @@ Ces informations sont les suivantes:
  - Catégorie
  - Rating
  - URL de l'image
+ - Chemin local de l'image téléchargée
 
 
 En plus de cela, les images des livres sont téléchargées.
