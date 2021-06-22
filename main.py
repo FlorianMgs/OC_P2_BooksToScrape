@@ -8,6 +8,7 @@ htmlResponse = requests.get('http://books.toscrape.com/index.html')
 soup = BeautifulSoup(htmlResponse.text, 'lxml')
 
 categories = {}
+print("Scrapping in progress...")
 for a in soup.find('div', {'class': 'side_categories'}).ul.find_all('a'):
     if 'books_1' not in a.get('href'):
         categories[a.text.replace('\n', '').replace('  ', '')] = 'http://books.toscrape.com/' + a.get('href')
