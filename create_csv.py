@@ -1,5 +1,6 @@
 import csv
 
+
 def write_csv(list_books_dicts):
 
     csvColumns = ['product_page_url', 'upc', 'title', 'price_including_tax', 'price_excluding_tax', 'number_available', 'product_description', 'category', 'review_rating', 'image_url', 'image_path']

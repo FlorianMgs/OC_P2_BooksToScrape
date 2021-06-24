@@ -2,6 +2,7 @@ import requests
 import os
 from bs4 import BeautifulSoup
 
+
 class Book:
 
     def get_soup(self, url):
@@ -56,7 +57,7 @@ class Book:
             elif 'incl' in tr.text:
                 priceInclTax = tr.td.text.replace('Â', '')
             elif 'Availability' in tr.text:
-                stock = ''.join(x for x in tr.td.text if x.isdigit())
+                stock = tr.td.text.split(' ')[3].replace('(', '')
         return {
             'upc': upc,
             'price_excluding_tax': priceExclTax,
@@ -85,15 +86,12 @@ class Book:
         }
 
     def generate_data(self, url):
-        bookUrl = self.book_url(url)
-        bookTitle = self.book_title(url)
-        bookDescReviews = self.book_desc_reviews(url)
-        bookCategory = self.book_category(url)
-        bookUpcPricesStocks = self.book_upc_prices_stocks(url)
-        bookImg = self.book_img(url)
-
         bookInfos = {}
-        for d in [bookUrl, bookTitle, bookDescReviews, bookCategory, bookUpcPricesStocks, bookImg]:
-            bookInfos.update(d)
+        bookInfos.update(self.book_url(url))
+        bookInfos.update(self.book_title(url))
+        bookInfos.update(self.book_desc_reviews(url))
+        bookInfos.update(self.book_category(url))
+        bookInfos.update(self.book_upc_prices_stocks(url))
+        bookInfos.update(self.book_img(url))
 
         return bookInfos

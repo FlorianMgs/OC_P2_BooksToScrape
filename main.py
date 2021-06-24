@@ -20,7 +20,7 @@ for categorie, catUrl in categories.items():
 
     # determination du nb de pages de la catégorie
     if soup.find('ul', {'class': 'pager'}):
-        nbPages = int(''.join(x for x in soup.find('li', {'class': 'current'}).text if x.isdigit() and x != '1'))
+        nbPages = int(soup.find('li', {'class': 'current'}).text.split(' ')[31].replace('\n', ''))
     else:
         nbPages = 1
 
